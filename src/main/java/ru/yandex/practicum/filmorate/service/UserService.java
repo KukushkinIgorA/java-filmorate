@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dictionary.UriParam;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -37,43 +38,49 @@ public class UserService {
     }
 
     public User findUser(String userId) {
-        int userIdInt = Integer.parseInt(userId);
+        int userIdInt = validateParseInt(userId);
         return userStorage.findUser(userIdInt);
     }
 
     public void addAsFriend(String userId, String friendId) {
-        int userIdInt = Integer.parseInt(userId);
-        int friendIdInt = Integer.parseInt(friendId);
+        int userIdInt = validateParseInt(userId);
+        int friendIdInt = validateParseInt(friendId);
         userStorage.addAsFriend(userIdInt, friendIdInt);
     }
 
     public void removeFromFriends(String userId, String friendId) {
-        int userIdInt = Integer.parseInt(userId);
-        int friendIdInt = Integer.parseInt(friendId);
+        int userIdInt = validateParseInt(userId);
+        int friendIdInt = validateParseInt(friendId);
         userStorage.removeFromFriends(userIdInt, friendIdInt);
     }
 
     public List<User> findUserFriends(String userId) {
-        int userIdInt = Integer.parseInt(userId);
+        int userIdInt = validateParseInt(userId);
         return userStorage.findUserFriends(userIdInt);
     }
 
     public List<User> findCommonFriends(String userId, String otherId) {
-        int userIdInt = Integer.parseInt(userId);
-        int otherIdInt = Integer.parseInt(otherId);
+        int userIdInt = validateParseInt(userId);
+        int otherIdInt = validateParseInt(otherId);
         return userStorage.findCommonFriends(userIdInt, otherIdInt);
     }
 
     void validate(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !Pattern.matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$", user.getEmail())) {
-            log.error("электронная почта не может быть пустой и должна содержать символ @ {}", user);
-            throw new ValidationException("электронная почта не может быть пустой и должна содержать символ @");
+            throw new ValidationException(String.format("электронная почта не может быть пустой и должна содержать символ @: %s", user.getEmail()));
         } else if (user.getLogin() == null || user.getLogin().isBlank() || Pattern.matches("^.*\\s.*$", user.getLogin())) {
-            log.error("логин не может быть пустым и содержать пробелы {}", user);
-            throw new ValidationException("логин не может быть пустым и содержать пробелы");
+            throw new ValidationException(String.format("логин не может быть пустым и содержать пробелы: %s", user.getLogin()));
         } else if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            log.error("дата рождения не может быть в будущем {}", user);
-            throw new ValidationException("дата рождения не может быть в будущем");
+            throw new ValidationException(String.format("дата рождения не может быть в будущем: %s", user.getBirthday()));
+        }
+    }
+
+    private int validateParseInt(String value) {
+        Pattern pattern = Pattern.compile("^-?\\d+$");
+        if (value == null || !pattern.matcher(value).matches()) {
+            throw new ValidationException(String.format("%s не валидное: %s", UriParam.USER_ID.getLabel(), value));
+        } else {
+            return Integer.parseInt(value);
         }
     }
 }

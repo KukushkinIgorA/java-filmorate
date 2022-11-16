@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dictionary.UriParam;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -11,6 +12,7 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -42,19 +44,19 @@ public class FilmService {
     }
 
     public Film findFilm(String filmId) {
-        int filmIdInt = Integer.parseInt(filmId);
+        int filmIdInt = validateParseInt(filmId, UriParam.FILM_ID);
         return filmStorage.findFilm(filmIdInt);
     }
 
     public void userLikesFilm(String filmId, String userId) {
-        int filmIdInt = Integer.parseInt(filmId);
-        int userIdInt = Integer.parseInt(userId);
+        int filmIdInt = validateParseInt(filmId, UriParam.FILM_ID);
+        int userIdInt = validateParseInt(userId, UriParam.USER_ID);
         userStorage.findUser(userIdInt);
         filmStorage.userLikesFilm(filmIdInt, userIdInt);
     }
     public void userDeleteLike(String filmId, String userId) {
-        int filmIdInt = Integer.parseInt(filmId);
-        int userIdInt = Integer.parseInt(userId);
+        int filmIdInt = validateParseInt(filmId, UriParam.FILM_ID);
+        int userIdInt = validateParseInt(userId, UriParam.USER_ID);
         userStorage.findUser(userIdInt);
         filmStorage.userDeleteLike(filmIdInt, userIdInt);
     }
@@ -64,7 +66,7 @@ public class FilmService {
         if (filmCount == null) {
             filmCountInt = DEFAULT_FILM_COUNT;
         } else {
-            filmCountInt = Integer.parseInt(filmCount);
+            filmCountInt = validateParseInt(filmCount, UriParam.FILM_COUNT);
         }
         return filmStorage.findMostPopularFilms(filmCountInt);
     }
@@ -82,6 +84,15 @@ public class FilmService {
         } else if (film.getDuration() <= 0) {
             log.error("продолжительность фильма должна быть положительной {}", film);
             throw new ValidationException("продолжительность фильма должна быть положительной");
+        }
+    }
+
+    private int validateParseInt(String value, UriParam param) {
+        Pattern pattern = Pattern.compile("^-?\\d+$");
+        if (value == null || !pattern.matcher(value).matches()) {
+            throw new ValidationException(String.format("%s не валидное: %s", param.getLabel(), value));
+        } else {
+            return Integer.parseInt(value);
         }
     }
 }

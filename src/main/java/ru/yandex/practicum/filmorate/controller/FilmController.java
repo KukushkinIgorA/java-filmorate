@@ -48,7 +48,7 @@ public class  FilmController {
         return filmService.findFilm(filmId);
     }
 
-    //пользователь ставит лайк фильму
+    //Пользователь ставит лайк фильму
     @PutMapping("{id}/like/{userId}")
     public void userLikesFilm(
             @PathVariable("id") String filmId,
@@ -66,7 +66,7 @@ public class  FilmController {
         filmService.userDeleteLike(filmId, userId);
     }
 
-    //возвращает список из первых count фильмов по количеству лайков
+    //Возвращает список из первых count фильмов по количеству лайков
     @GetMapping("popular")
     public List<Film> findMostPopularFilms(@RequestParam(name = "count", required = false) String filmCount) {
         log.info("Запрос первых {} фильмов по количеству лайков", filmCount);

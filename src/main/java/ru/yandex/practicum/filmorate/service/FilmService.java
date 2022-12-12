@@ -4,27 +4,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dictionary.UriParam;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.utils.FilmorateUtils;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Service
 @Slf4j
 public class FilmService {
     public static final int DEFAULT_FILM_COUNT = 10;
+
     private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
+
+    private final UserService userService;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(FilmStorage filmStorage, UserService userService) {
         this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
+        this.userService = userService;
     }
 
 
@@ -40,24 +43,32 @@ public class FilmService {
 
     public Film update(Film film) {
         validate(film);
-        return filmStorage.update(film);
+        final Film filmUpdate = filmStorage.update(film);
+        if(filmUpdate == null)
+            throw new NotFoundException(String.format("на сервере отстутствует фильм c id = %s", film.getId()));
+        return filmUpdate;
     }
 
     public Film findFilm(String filmId) {
-        int filmIdInt = validateParseInt(filmId, UriParam.FILM_ID);
-        return filmStorage.findFilm(filmIdInt);
+        int filmIdInt = FilmorateUtils.validateParseInt(filmId, UriParam.FILM_ID);
+        final Film film = filmStorage.findFilm(filmIdInt);
+        if(film == null)
+            throw new NotFoundException(String.format("на сервере отстутствует фильм c id = %s", filmIdInt));
+        return film;
     }
 
     public void userLikesFilm(String filmId, String userId) {
-        int filmIdInt = validateParseInt(filmId, UriParam.FILM_ID);
-        int userIdInt = validateParseInt(userId, UriParam.USER_ID);
-        userStorage.findUser(userIdInt);
+        int filmIdInt = FilmorateUtils.validateParseInt(filmId, UriParam.FILM_ID);
+        int userIdInt = FilmorateUtils.validateParseInt(userId, UriParam.USER_ID);
+        findFilm(filmId);
+        userService.findUser(userId);
         filmStorage.userLikesFilm(filmIdInt, userIdInt);
     }
     public void userDeleteLike(String filmId, String userId) {
-        int filmIdInt = validateParseInt(filmId, UriParam.FILM_ID);
-        int userIdInt = validateParseInt(userId, UriParam.USER_ID);
-        userStorage.findUser(userIdInt);
+        int filmIdInt = FilmorateUtils.validateParseInt(filmId, UriParam.FILM_ID);
+        int userIdInt = FilmorateUtils.validateParseInt(userId, UriParam.USER_ID);
+        findFilm(filmId);
+        userService.findUser(userId);
         filmStorage.userDeleteLike(filmIdInt, userIdInt);
     }
 
@@ -66,7 +77,7 @@ public class FilmService {
         if (filmCount == null) {
             filmCountInt = DEFAULT_FILM_COUNT;
         } else {
-            filmCountInt = validateParseInt(filmCount, UriParam.FILM_COUNT);
+            filmCountInt = FilmorateUtils.validateParseInt(filmCount, UriParam.FILM_COUNT);
         }
         return filmStorage.findMostPopularFilms(filmCountInt);
     }
@@ -84,15 +95,6 @@ public class FilmService {
         } else if (film.getDuration() <= 0) {
             log.error("продолжительность фильма должна быть положительной {}", film);
             throw new ValidationException("продолжительность фильма должна быть положительной");
-        }
-    }
-
-    private int validateParseInt(String value, UriParam param) {
-        Pattern pattern = Pattern.compile("^-?\\d+$");
-        if (value == null || !pattern.matcher(value).matches()) {
-            throw new ValidationException(String.format("%s не валидное: %s", param.getLabel(), value));
-        } else {
-            return Integer.parseInt(value);
         }
     }
 }

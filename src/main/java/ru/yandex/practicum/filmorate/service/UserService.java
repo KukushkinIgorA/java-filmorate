@@ -4,9 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dictionary.UriParam;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.utils.FilmorateUtils;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,39 +31,72 @@ public class UserService {
 
     public User create(User user) {
         validate(user);
+        if(user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         return userStorage.create(user);
     }
 
     public User update(User user) {
         validate(user);
-        return userStorage.update(user);
+        if(user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+        final User userUpdate = userStorage.update(user);
+        if(userUpdate == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", user.getId()));
+        return userUpdate;
     }
 
     public User findUser(String userId) {
-        int userIdInt = validateParseInt(userId);
-        return userStorage.findUser(userIdInt);
+        int userIdInt = FilmorateUtils.validateParseInt(userId, UriParam.USER_ID);
+        final User user = userStorage.findUser(userIdInt);
+        if(user == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", userIdInt));
+        return user;
     }
 
     public void addAsFriend(String userId, String friendId) {
-        int userIdInt = validateParseInt(userId);
-        int friendIdInt = validateParseInt(friendId);
+        int userIdInt = FilmorateUtils.validateParseInt(userId, UriParam.USER_ID);
+        int friendIdInt = FilmorateUtils.validateParseInt(friendId, UriParam.USER_ID);
+        User user = userStorage.findUser(userIdInt);
+        if (user == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", userIdInt));
+        User friend = userStorage.findUser(friendIdInt);
+        if (friend == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", friendIdInt));
         userStorage.addAsFriend(userIdInt, friendIdInt);
     }
 
     public void removeFromFriends(String userId, String friendId) {
-        int userIdInt = validateParseInt(userId);
-        int friendIdInt = validateParseInt(friendId);
+        int userIdInt = FilmorateUtils.validateParseInt(userId, UriParam.USER_ID);
+        int friendIdInt = FilmorateUtils.validateParseInt(friendId, UriParam.USER_ID);
+        User user = userStorage.findUser(userIdInt);
+        if (user == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", userIdInt));
+        User friend = userStorage.findUser(friendIdInt);
+        if (friend == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", friendIdInt));
         userStorage.removeFromFriends(userIdInt, friendIdInt);
     }
 
     public List<User> findUserFriends(String userId) {
-        int userIdInt = validateParseInt(userId);
+        int userIdInt = FilmorateUtils.validateParseInt(userId, UriParam.USER_ID);
+        User user = userStorage.findUser(userIdInt);
+        if (user == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", userIdInt));
         return userStorage.findUserFriends(userIdInt);
     }
 
     public List<User> findCommonFriends(String userId, String otherId) {
-        int userIdInt = validateParseInt(userId);
-        int otherIdInt = validateParseInt(otherId);
+        int userIdInt = FilmorateUtils.validateParseInt(userId, UriParam.USER_ID);
+        int otherIdInt = FilmorateUtils.validateParseInt(otherId, UriParam.USER_ID);
+        User user = userStorage.findUser(userIdInt);
+        if (user == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", userIdInt));
+        User other = userStorage.findUser(otherIdInt);
+        if (other == null)
+            throw new NotFoundException(String.format("на сервере отстутствует пользователь c id = %s", otherIdInt));
         return userStorage.findCommonFriends(userIdInt, otherIdInt);
     }
 
@@ -72,15 +107,6 @@ public class UserService {
             throw new ValidationException(String.format("логин не может быть пустым и содержать пробелы: %s", user.getLogin()));
         } else if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
             throw new ValidationException(String.format("дата рождения не может быть в будущем: %s", user.getBirthday()));
-        }
-    }
-
-    private int validateParseInt(String value) {
-        Pattern pattern = Pattern.compile("^-?\\d+$");
-        if (value == null || !pattern.matcher(value).matches()) {
-            throw new ValidationException(String.format("%s не валидное: %s", UriParam.USER_ID.getLabel(), value));
-        } else {
-            return Integer.parseInt(value);
         }
     }
 }

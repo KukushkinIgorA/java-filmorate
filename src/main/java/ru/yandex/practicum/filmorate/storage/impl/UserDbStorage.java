@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.UserFriend;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -25,8 +26,7 @@ public class UserDbStorage implements UserStorage {
     public List<User> findAll() {
         String sqlQuery = "select USER_ID, EMAIL, LOGIN, NAME, BIRTHDAY "+
                 "from USERS";
-        final List<User> users = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser);
-        return users;
+        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser);
     }
 
     @Override
@@ -77,6 +77,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
+    @Transactional
     public void addAsFriend(int userId, int friendId) {
         String sqlQuery = "select USER_FRIEND_ID, USER_ID, FRIEND_ID, CONFIRM_FLG " +
                 "from USER_FRIEND " +
@@ -95,6 +96,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
+    @Transactional
     public void removeFromFriends(int userId, int friendId) {
         String sqlQuery = "select USER_FRIEND_ID, USER_ID, FRIEND_ID, CONFIRM_FLG " +
                 "from USER_FRIEND " +
@@ -107,12 +109,11 @@ public class UserDbStorage implements UserStorage {
                 "set CONFIRM_FLG = 'N', USER_ID = ?, FRIEND_ID = ?" +
                 "where USER_ID = ? AND FRIEND_ID = ?";
         final List<UserFriend> userFriends = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUserFriend, userId, friendId, friendId, userId);
-        if(userFriends.size() == 0) {
-        } else if(userFriends.get(0).getUserId() == userId && !userFriends.get(0).isConfirmFlg()){
+        if(userFriends.size() != 0 && userFriends.get(0).getUserId() == userId && !userFriends.get(0).isConfirmFlg()){
             jdbcTemplate.update(sqlDelete, userId, friendId);
-        } else if(userFriends.get(0).getUserId() == userId && userFriends.get(0).isConfirmFlg()){
+        } else if(userFriends.size() != 0 && userFriends.get(0).getUserId() == userId && userFriends.get(0).isConfirmFlg()){
             jdbcTemplate.update(sqlUpdate, friendId, userId, userId, friendId);
-        } else if (userFriends.get(0).getFriendId() == userId && userFriends.get(0).isConfirmFlg()){
+        } else if (userFriends.size() != 0 && userFriends.get(0).getFriendId() == userId && userFriends.get(0).isConfirmFlg()){
             jdbcTemplate.update(sqlUpdate, friendId, userId, friendId, userId);
         }
     }
@@ -121,13 +122,12 @@ public class UserDbStorage implements UserStorage {
     public List<User> findUserFriends(int userId) {
         String sqlQuery = "select u.USER_ID, u.EMAIL, u.LOGIN, u.NAME, u.BIRTHDAY " +
                 "from USER_FRIEND uf join USERS u on uf.USER_ID = u.USER_ID  " +
-                "where FRIEND_ID = ? " +
+                "where FRIEND_ID = ? and CONFIRM_FLG = true " +
                 "UNION ALL " +
                 "select u.USER_ID, u.EMAIL, u.LOGIN, u.NAME, u.BIRTHDAY " +
                 "from USER_FRIEND uf join USERS u on uf.FRIEND_ID= u.USER_ID " +
-                "where uf.USER_ID = ? --and CONFIRM_FLG = true";
-        final List<User> users = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId, userId);
-        return users;
+                "where uf.USER_ID = ?";
+        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId, userId);
     }
 
     @Override
@@ -137,27 +137,26 @@ public class UserDbStorage implements UserStorage {
                 "where u.USER_ID in ( " +
                 "select uf.USER_ID " +
                 "from USER_FRIEND uf " +
-                "where FRIEND_ID = ? " +
+                "where FRIEND_ID = ? and CONFIRM_FLG = true " +
                 "union all " +
                 "select uf.FRIEND_ID " +
                 "from USER_FRIEND uf " +
-                "where uf.USER_ID = ? and CONFIRM_FLG = true) " +
+                "where uf.USER_ID = ?) " +
                 "INTERSECT " +
                 "select o.USER_ID, o.EMAIL, o.LOGIN, o.NAME, o.BIRTHDAY " +
                 "from USERS o " +
                 "where o.USER_ID in ( " +
                 "select uf.USER_ID " +
                 "from USER_FRIEND uf " +
-                "where FRIEND_ID = ? " +
+                "where FRIEND_ID = ? and CONFIRM_FLG = true " +
                 "union all " +
                 "select uf.FRIEND_ID " +
                 "from USER_FRIEND uf " +
-                "where uf.USER_ID = ? and CONFIRM_FLG = true)";
-        final List<User> users = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId, userId, otherId, otherId);
-        return users;
+                "where uf.USER_ID = ?)";
+        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId, userId, otherId, otherId);
     }
 
-    static User makeUser(ResultSet rs, int rowNum) throws SQLException {
+    private static User makeUser(ResultSet rs, int rowNum) throws SQLException {
         return new User(
                 rs.getInt("USER_ID"),
                 rs.getString("EMAIL"),
@@ -167,7 +166,7 @@ public class UserDbStorage implements UserStorage {
         );
     }
 
-    static UserFriend makeUserFriend(ResultSet rs, int rowNum) throws SQLException {
+    private static UserFriend makeUserFriend(ResultSet rs, int rowNum) throws SQLException {
         return new UserFriend(
                 rs.getInt("USER_FRIEND_ID"),
                 rs.getInt("USER_ID"),

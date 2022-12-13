@@ -1,3 +1,17 @@
+drop table FILM_GENRE;
+
+drop table FILM_LIKE;
+
+drop table FILMS;
+
+drop table GENRE;
+
+drop table RATING_MPA;
+
+drop table USER_FRIEND;
+
+drop table USERS;
+
 create table if not exists users
 (
     user_id  integer generated always as identity
@@ -29,7 +43,7 @@ create table if not exists rating_mpa
         constraint rating_pk
             primary key,
     name        varchar(8) not null  UNIQUE,
-    description varchar(128)
+    description varchar(200)
 );
 
 create table if not exists films
@@ -41,6 +55,7 @@ create table if not exists films
     description  varchar(200),
     release_date date,
     duration     integer,
+    rating       integer DEFAULT 0,
     rating_mpa_id    integer
         constraint films_rating_mpa_null_fk
             references rating_mpa
@@ -48,7 +63,7 @@ create table if not exists films
 
 create table if not exists genre
 (
-    genre_id integer generated always as identity
+    genre_id integer
         constraint genre_pk
             primary key,
     name     varchar(32) not null UNIQUE
@@ -64,7 +79,8 @@ create table if not exists film_genre
             references films,
     genre_id      integer not null
         constraint film_genre_genre_null_fk
-            references genre
+            references genre,
+    UNIQUE(film_id, genre_id)
 );
 
 create table if not exists film_like

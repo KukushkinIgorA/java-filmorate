@@ -7,7 +7,6 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
@@ -19,8 +18,9 @@ public class Film {
     private String description;
     private LocalDate releaseDate;
     private int duration;
-    private Map<String, Integer> mpa;
-    private List<Map<String, Integer>> genres;
+    private int rating;
+    private RatingMpa mpa;
+    private List<Genre> genres;
 
     public Film(int id, String name, String description, LocalDate releaseDate, int duration) {
         this.id = id;

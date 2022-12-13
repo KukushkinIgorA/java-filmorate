@@ -5,14 +5,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.impl.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.impl.UserDbStorage;
 
 import java.time.LocalDate;
 import java.time.Month;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserServiceTest {
     UserService userService;
@@ -20,8 +22,8 @@ class UserServiceTest {
 
     @BeforeEach
     void init() {
-        userService = new UserService(new InMemoryUserStorage());
-        user = new User(1, "garyn@mail.ru", "Garyn", "Игорь", LocalDate.of(1990, Month.JUNE, 18), null);
+        userService = new UserService(new UserDbStorage(new JdbcTemplate()));
+        user = new User(1, "garyn@mail.ru", "Garyn", "Игорь", LocalDate.of(1990, Month.JUNE, 18));
     }
 
     @ParameterizedTest

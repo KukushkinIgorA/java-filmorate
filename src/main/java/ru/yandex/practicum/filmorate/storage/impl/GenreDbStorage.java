@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.storage.impl;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
 import java.sql.ResultSet;
@@ -22,9 +21,8 @@ public class GenreDbStorage implements GenreStorage {
     @Override
     public List<Genre> findAll() {
         String sqlQuery = "select GENRE_ID, NAME "+
-                "from GENRE";
-        final List<Genre> genres = jdbcTemplate.query(sqlQuery, GenreDbStorage::makeGenre);
-        return genres;
+                "from GENRE order by GENRE_ID";
+        return jdbcTemplate.query(sqlQuery, GenreDbStorage::makeGenre);
     }
 
     @Override
@@ -39,7 +37,7 @@ public class GenreDbStorage implements GenreStorage {
         }
     }
 
-    static Genre makeGenre(ResultSet rs, int rowNum) throws SQLException {
+    private static Genre makeGenre(ResultSet rs, int rowNum) throws SQLException {
         return new Genre(
                 rs.getInt("GENRE_ID"),
                 rs.getString("NAME")

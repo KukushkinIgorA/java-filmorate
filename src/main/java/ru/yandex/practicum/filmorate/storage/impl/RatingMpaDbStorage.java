@@ -21,8 +21,7 @@ public class RatingMpaDbStorage implements RatingMpaStorage {
     public List<RatingMpa> findAll() {
         String sqlQuery = "select RATING_MPA_ID, NAME, DESCRIPTION "+
                 "from RATING_MPA";
-        final List<RatingMpa> ratingMpas = jdbcTemplate.query(sqlQuery, RatingMpaDbStorage::makeRatingMpa);
-        return ratingMpas;
+        return jdbcTemplate.query(sqlQuery, RatingMpaDbStorage::makeRatingMpa);
     }
 
     @Override
@@ -37,7 +36,7 @@ public class RatingMpaDbStorage implements RatingMpaStorage {
         }
     }
 
-    static RatingMpa makeRatingMpa(ResultSet rs, int rowNum) throws SQLException {
+    private static RatingMpa makeRatingMpa(ResultSet rs, int rowNum) throws SQLException {
         return new RatingMpa(
                 rs.getInt("RATING_MPA_ID"),
                 rs.getString("NAME"),

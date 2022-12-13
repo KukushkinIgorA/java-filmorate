@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 import ru.yandex.practicum.filmorate.utils.FilmorateUtils;
 
 import java.time.LocalDate;
@@ -38,7 +37,7 @@ public class FilmService {
 
     public Film create(Film film) {
         validate(film);
-        return  filmStorage.create(film);
+        return filmStorage.create(film);
     }
 
     public Film update(Film film) {

@@ -25,7 +25,7 @@ create table if not exists user_friend
 
 create table if not exists rating_mpa
 (
-    rating_mpa_id   integer generated always as identity
+    rating_mpa_id   integer
         constraint rating_pk
             primary key,
     name        varchar(8) not null  UNIQUE,

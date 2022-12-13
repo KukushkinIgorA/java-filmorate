@@ -1,17 +1,3 @@
-drop table FILM_GENRE;
-
-drop table FILM_LIKE;
-
-drop table FILMS;
-
-drop table GENRE;
-
-drop table RATING_MPA;
-
-drop table USER_FRIEND;
-
-drop table USERS;
-
 create table if not exists users
 (
     user_id  integer generated always as identity

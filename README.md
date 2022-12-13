@@ -19,6 +19,14 @@
 - `[GET] /users/{id}/friends` – получить список всех друзей пользователя `id`
 - `[GET] /users/{id}/friends/common/{otherId}` – получить список общих друзей пользователей с `id` и `otherId`
 
+### Genres
+- `[GET] /genres` – получить список всех жанров
+- `[GET] /genres/{id}` – получить жанр по `id`
+
+### MPAs
+- `[GET] /mpa` – получить список всех рейтингов MPA
+- `[GET] /mpa/{id}` – получить рейтинг MPA по `id`
+
 ## Схема базы данных
 
 https://miro.com/app/board/uXjVP-Gj1xU=/

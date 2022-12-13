@@ -34,6 +34,10 @@ class GenreControllerTest {
         Genre genre6 = genres.get(5);
 
         assertEquals(1, genre1.getId());
+        //TODO не получилось побороть кодировку. Приложение запускается, постман тесты проходят
+        //TODO а вот если сделать из идеи MVN CLEAN PACKAGE, то проект не собирается с тестами на русские буквы
+        //TODO ошибки вида: org.opentest4j.AssertionFailedError: expected: <У фильма нет возрастных ограничений> but was: <РЈ С„РёР»СЊРјР° РЅРµС‚ РІРѕР·СЂР°СЃС‚РЅС‹С… РѕРіСЂР°РЅРёС‡РµРЅРёР№>
+        //TODO как можно побороть?
         //assertEquals("Комедия", genre1.getName());
         assertEquals(2, genre2.getId());
         //assertEquals("Драма", genre2.getName());

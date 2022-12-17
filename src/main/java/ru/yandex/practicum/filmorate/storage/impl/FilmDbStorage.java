@@ -40,7 +40,7 @@ public class FilmDbStorage implements FilmStorage {
     @Transactional
     public Film create(Film film) {
         String sqlInsert = "insert into FILMS (NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA_ID) values (?, ?, ?, ?, ?)";
-        String sqlInsertGenre = "insert into FILM_GENRE (FILM_ID, GENRE_ID) values (?, ?) on conflict do nothing";
+        String sqlInsertGenre = "merge into FILM_GENRE (FILM_ID, GENRE_ID) values (?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(con -> {
             PreparedStatement stmt = con.prepareStatement(sqlInsert, new String[]{"FILM_ID"});
@@ -75,7 +75,7 @@ public class FilmDbStorage implements FilmStorage {
                 "where FILM_ID = ?";
         String sqlDelete = "delete from FILM_GENRE " +
                 "where FILM_ID = ?";
-        String sqlInsertGenre = "insert into FILM_GENRE (FILM_ID, GENRE_ID) values (?, ?) on conflict do nothing";
+        String sqlInsertGenre = "merge into FILM_GENRE (FILM_ID, GENRE_ID) values (?, ?)";
 
         int updateRecordCount = jdbcTemplate.update(sqlUpdate, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(),
                 film.getMpa() != null ? film.getMpa().getId() : null,
@@ -109,7 +109,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     @Transactional
     public void userLikesFilm(int filmId, int userId) {
-        String sqlQuery = "select FILM_LIKE_ID, FILM_ID, USER_ID " +
+        String sqlQuery = "select FILM_ID, USER_ID " +
                 "from FILM_LIKE " +
                 "where FILM_ID = ? AND USER_ID = ?";
         String sqlInsert = "insert into FILM_LIKE (FILM_ID, USER_ID) values (?, ?)";
@@ -126,7 +126,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     @Transactional
     public void userDeleteLike(int filmId, int userId) {
-        String sqlQuery = "select FILM_LIKE_ID, FILM_ID, USER_ID " +
+        String sqlQuery = "select FILM_ID, USER_ID " +
                 "from FILM_LIKE " +
                 "where FILM_ID = ? AND USER_ID = ?";
         String sqlDelete = "delete from FILM_LIKE where FILM_ID = ? AND USER_ID = ?";
@@ -166,7 +166,6 @@ public class FilmDbStorage implements FilmStorage {
 
     private static FilmLike makeFilmLike(ResultSet rs, int rowNum) throws SQLException {
         return new FilmLike(
-                rs.getInt("FILM_LIKE_ID"),
                 rs.getInt("FILM_ID"),
                 rs.getInt("USER_ID")
         );

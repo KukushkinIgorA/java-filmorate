@@ -11,16 +11,14 @@ create table if not exists users
 
 create table if not exists user_friend
 (
-    user_friend_id integer generated always as identity
-        constraint user_friend_pk
-            primary key,
     user_id        integer not null
         constraint user_friend_users_null_fk
             references users,
     friend_id      integer not null
         constraint user_friend_users_user_id_fk
             references users,
-    confirm_flg    boolean default false
+    confirm_flg    boolean default false,
+    PRIMARY KEY (user_id, friend_id)
 );
 
 create table if not exists rating_mpa
@@ -57,27 +55,23 @@ create table if not exists genre
 
 create table if not exists film_genre
 (
-    film_genre_id integer generated always as identity
-        constraint film_genre_pk
-            primary key,
     film_id       integer not null
         constraint film_genre_films_null_fk
             references films,
     genre_id      integer not null
         constraint film_genre_genre_null_fk
             references genre,
-    UNIQUE(film_id, genre_id)
+    UNIQUE(film_id, genre_id),
+    PRIMARY KEY (film_id, genre_id)
 );
 
 create table if not exists film_like
 (
-    film_like_id integer generated always as identity
-        constraint film_like_pk
-            primary key,
     film_id      integer not null
         constraint film_like_films_null_fk
             references films,
     user_id      integer not null
         constraint film_like_users_null_fk
-            references users
+            references users,
+    PRIMARY KEY (film_id, user_id)
 );

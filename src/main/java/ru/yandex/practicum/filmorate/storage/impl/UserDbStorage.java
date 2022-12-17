@@ -79,7 +79,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     @Transactional
     public void addAsFriend(int userId, int friendId) {
-        String sqlQuery = "select USER_FRIEND_ID, USER_ID, FRIEND_ID, CONFIRM_FLG " +
+        String sqlQuery = "select USER_ID, FRIEND_ID, CONFIRM_FLG " +
                 "from USER_FRIEND " +
                 "where (USER_ID = ? AND FRIEND_ID = ?) OR " +
                 "(USER_ID = ? AND FRIEND_ID = ?)";
@@ -98,7 +98,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     @Transactional
     public void removeFromFriends(int userId, int friendId) {
-        String sqlQuery = "select USER_FRIEND_ID, USER_ID, FRIEND_ID, CONFIRM_FLG " +
+        String sqlQuery = "select USER_ID, FRIEND_ID, CONFIRM_FLG " +
                 "from USER_FRIEND " +
                 "where (USER_ID = ? AND FRIEND_ID = ?) OR " +
                 "(USER_ID = ? AND FRIEND_ID = ?)";
@@ -168,7 +168,6 @@ public class UserDbStorage implements UserStorage {
 
     private static UserFriend makeUserFriend(ResultSet rs, int rowNum) throws SQLException {
         return new UserFriend(
-                rs.getInt("USER_FRIEND_ID"),
                 rs.getInt("USER_ID"),
                 rs.getInt("FRIEND_ID"),
                 rs.getBoolean("CONFIRM_FLG")

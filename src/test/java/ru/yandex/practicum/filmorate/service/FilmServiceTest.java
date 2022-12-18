@@ -5,15 +5,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.impl.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.impl.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.impl.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.impl.UserDbStorage;
 
 import java.time.LocalDate;
 import java.time.Month;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FilmServiceTest {
     FilmService filmService;
@@ -21,8 +23,8 @@ class FilmServiceTest {
 
     @BeforeEach
     void init() {
-        filmService = new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage());
-        film = new Film(1, "Зеленая миля", "Пол Эджкомб не верил в чудеса. Пока не столкнулся с одним из них", LocalDate.of(1999, Month.DECEMBER, 6), 189, null);
+        filmService = new FilmService(new FilmDbStorage(new JdbcTemplate()), new UserService(new UserDbStorage(new JdbcTemplate())));
+        film = new Film(1, "Зеленая миля", "Пол Эджкомб не верил в чудеса. Пока не столкнулся с одним из них", LocalDate.of(1999, Month.DECEMBER, 6), 189);
     }
 
     @ParameterizedTest
